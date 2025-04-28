@@ -1,0 +1,71 @@
+.web3-connect-wrapper {
+  margin-left: var(--space-2);
+}
+
+.connect-button {
+  background-color: var(--color-primary);
+  color: white;
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  font-size: 0.875rem;
+  transition: all var(--transition-fast);
+  border: none;
+  box-shadow: var(--shadow-sm);
+}
+
+.connect-button:hover {
+  background-color: var(--color-primary-dark);
+  box-shadow: var(--shadow-md);
+}
+
+.connect-button:disabled {
+  background-color: var(--color-gray-400);
+  cursor: not-allowed;
+}
+
+.account-info {
+  display: flex;
+  align-items: center;
+  background-color: var(--color-gray-100);
+  padding: 6px 12px;
+  border-radius: 100px;
+  font-size: 0.875rem;
+}
+
+.connected-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--color-success);
+  margin-right: 8px;
+}
+
+.account-address {
+  color: var(--color-gray-700);
+  font-weight: 500;
+}
+
+.disconnect-button {
+  background: none;
+  border: none;
+  color: var(--color-error);
+  font-size: 0.75rem;
+  margin-left: 8px;
+  padding: 0;
+  transition: opacity var(--transition-fast);
+}
+
+.disconnect-button:hover {
+  opacity: 0.8;
+}
+
+@media (max-width: 767px) {
+  .account-info {
+    padding: 4px 10px;
+  }
+  
+  .account-address {
+    font-size: 0.75rem;
+  }
+}

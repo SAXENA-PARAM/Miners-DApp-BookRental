@@ -1,0 +1,44 @@
+<svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <radialGradient id="rad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#00f0ff"/>
+      <stop offset="100%" stop-color="#001f3f"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Background madness -->
+  <rect width="100%" height="100%" fill="url(#rad)" />
+
+  <!-- Electric grid -->
+  <g stroke="#0ff" stroke-opacity="0.1">
+    <path d="M0 0 L400 400 M400 0 L0 400" />
+    <path d="M50 0 L50 400 M100 0 L100 400 M150 0 L150 400" />
+    <path d="M0 50 L400 50 M0 100 L400 100 M0 150 L400 150" />
+  </g>
+
+  <!-- Glowing chaotic blocks -->
+  <g filter="url(#glow)">
+    <rect x="50" y="50" width="80" height="80" fill="#ff00ff" transform="rotate(10 90 90)" />
+    <rect x="140" y="100" width="90" height="90" fill="#00ff99" transform="rotate(-8 185 145)" />
+    <rect x="230" y="160" width="70" height="70" fill="#ffff00" transform="rotate(12 265 195)" />
+    <rect x="90" y="220" width="100" height="100" fill="#ff3300" transform="rotate(-15 140 270)" />
+  </g>
+
+  <!-- Link chains (chaotic) -->
+  <g stroke="#fff" stroke-width="4" stroke-dasharray="4,2" filter="url(#glow)">
+    <line x1="90" y1="90" x2="185" y2="145" />
+    <line x1="185" y1="145" x2="265" y2="195" />
+    <line x1="265" y1="195" x2="140" y2="270" />
+  </g>
+
+  <!-- Lightning vibes -->
+  <polyline points="100,300 110,280 120,290 130,270 140,280" fill="none" stroke="#00ffff" stroke-width="3" filter="url(#glow)" />
+  <polyline points="300,60 290,80 280,70 270,90 260,80" fill="none" stroke="#ff00ff" stroke-width="2" filter="url(#glow)" />
+</svg>

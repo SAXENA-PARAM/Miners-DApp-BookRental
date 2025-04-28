@@ -1,0 +1,151 @@
+/* Explore.module.css  – light mode, compact 360 × 380 cards
+   --------------------------------------------------------- */
+
+/* ---------- Design tokens ---------- */
+:root {
+  --clr-bg:          transparent;
+  --clr-card-bg:     #ffffff;
+  --clr-primary:     #5b6aff;
+  --clr-primary-dark:#4b59e0;
+  --clr-text:        #1e1e1e;
+  --clr-text-sub:    #60646c;
+  --clr-badge-bg:    #ff4757;
+  --clr-badge-text:  #ffffff;
+  --radius-lg:       1rem;
+  --radius-sm:       .5rem;
+  --shadow-card:     0 4px 10px rgba(0,0,0,.06);
+  --transition-fast: .15s ease-in-out;
+}
+
+/* ---------- Page shell ---------- */
+.explore-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 4rem;
+  background: var(--clr-bg);
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+.page-title {
+  font-size: clamp(1.75rem, 4vw, 2.5rem);
+  font-weight: 700;
+  margin-bottom: 2rem;
+  text-align: center;
+  color: var(--clr-text);
+}
+
+.explore-msg {
+  text-align: center;
+  font-size: 1.125rem;
+  color: var(--clr-text-sub);
+  margin-top: 3rem;
+}
+
+/* ---------- Catalogue grid ---------- */
+.books-list {
+  display: grid;
+  gap: 1rem; /* tighter rows/cols */
+  /* Each cell never grows beyond 360 px */
+  grid-template-columns: repeat(auto-fit, minmax(220px, 360px));
+  justify-content: center; /* center when tracks don’t fill row */
+}
+
+/* ---------- Book card ---------- */
+.book-card {
+  display: flex;
+  flex-direction: column;
+  text-decoration: none;
+  background: var(--clr-card-bg);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-card);
+  transition: transform var(--transition-fast),
+              box-shadow var(--transition-fast);
+  color: var(--clr-text);
+  width: 100%;          /* follow grid width */
+  max-width: 360px;
+  max-height: 380px;
+}
+
+.book-card:hover,
+.book-card:focus-visible {
+  transform: translateY(-4px);
+  box-shadow: 0 6px 16px rgba(0,0,0,.09);
+}
+
+/* Cover occupies ~55 % of card height */
+.cover {
+  width: 100%;
+  height: 55%;
+  object-fit: cover;
+}
+
+/* ---------- Card body ---------- */
+.book-card h2 {
+  margin: 0.65rem 1rem 0.25rem;
+  font-size: 1rem;        /* compact */
+  line-height: 1.3;
+}
+
+.author {
+  margin: 0 1rem 0.65rem;
+  color: var(--clr-text-sub);
+  font-size: 0.875rem;
+}
+
+.book-card p {
+  margin: 0 1rem 0.8rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+/* ---------- Badge ---------- */
+.badge {
+  position: absolute;
+  top: 0.6rem;
+  right: 0.6rem;
+  background: var(--clr-badge-bg);
+  color: var(--clr-badge-text);
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--radius-sm);
+  text-transform: uppercase;
+  letter-spacing: .02em;
+}
+
+/* ---------- Rent button ---------- */
+.rent-button {
+  margin: auto 1rem 1rem;
+  background: var(--clr-primary);
+  color: #fff;
+  border: none;
+  padding: 0.45rem 0;
+  border-radius: var(--radius-sm);
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--transition-fast);
+  width: calc(100% - 2rem);
+  text-align: center;
+}
+
+.rent-button:hover,
+.rent-button:focus-visible {
+  background: var(--clr-primary-dark);
+}
+
+/* ---------- Responsive tweaks ---------- */
+@media (min-width: 768px) {
+  .page-title {
+    margin-bottom: 2.5rem;
+  }
+  .books-list {
+    gap: 1.25rem;
+  }
+  /* Slightly larger headings on wider screens */
+  .book-card h2 {
+    font-size: 1.075rem;
+  }
+}
