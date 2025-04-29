@@ -1,11 +1,6 @@
-export const SMART_CONTRACT_ADDRESS = "0x4eaca9d8f1f06a7c0de94024689283f6fd6d80d2"
+export const SMART_CONTRACT_ADDRESS = "0x1a5ae894f8c6836f41d25decc1ca628e6bc9e10c"
 export const SMART_CONTRACT_ABI = 
 [
-	{
-		"inputs": [],
-		"stateMutability": "nonpayable",
-		"type": "constructor"
-	},
 	{
 		"inputs": [],
 		"name": "BookDoesNotExist",
@@ -34,7 +29,22 @@ export const SMART_CONTRACT_ABI =
 	},
 	{
 		"inputs": [],
+		"name": "NotBookOwner",
+		"type": "error"
+	},
+	{
+		"inputs": [],
 		"name": "NotRenter",
+		"type": "error"
+	},
+	{
+		"inputs": [],
+		"name": "RentalActive",
+		"type": "error"
+	},
+	{
+		"inputs": [],
+		"name": "RentalNotOverdue",
 		"type": "error"
 	},
 	{
@@ -52,6 +62,49 @@ export const SMART_CONTRACT_ABI =
 				"type": "uint256"
 			},
 			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "renter",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "daysRented",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "fee",
+				"type": "uint256"
+			}
+		],
+		"name": "AutoReturned",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "id",
+				"type": "uint256"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			},
+			{
 				"indexed": false,
 				"internalType": "string",
 				"name": "metadataCid",
@@ -61,12 +114,6 @@ export const SMART_CONTRACT_ABI =
 				"indexed": false,
 				"internalType": "uint256",
 				"name": "rentWei",
-				"type": "uint256"
-			},
-			{
-				"indexed": false,
-				"internalType": "uint256",
-				"name": "depositWei",
 				"type": "uint256"
 			}
 		],
@@ -85,13 +132,44 @@ export const SMART_CONTRACT_ABI =
 			{
 				"indexed": true,
 				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			}
+		],
+		"name": "BookRemoved",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "id",
+				"type": "uint256"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
 				"name": "renter",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "owner",
 				"type": "address"
 			},
 			{
 				"indexed": false,
 				"internalType": "uint256",
-				"name": "time",
+				"name": "rentingDays",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "deposit",
 				"type": "uint256"
 			}
 		],
@@ -114,6 +192,12 @@ export const SMART_CONTRACT_ABI =
 				"type": "address"
 			},
 			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			},
+			{
 				"indexed": false,
 				"internalType": "uint256",
 				"name": "daysRented",
@@ -122,7 +206,13 @@ export const SMART_CONTRACT_ABI =
 			{
 				"indexed": false,
 				"internalType": "uint256",
-				"name": "rentPaid",
+				"name": "fee",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "refund",
 				"type": "uint256"
 			}
 		],
@@ -147,6 +237,50 @@ export const SMART_CONTRACT_ABI =
 		],
 		"name": "PaymentReceived",
 		"type": "event"
+	},
+	{
+		"inputs": [],
+		"name": "MAX_PENALTY_DAYS",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "PENALTY_PER_DAY_WEI",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "id",
+				"type": "uint256"
+			},
+			{
+				"internalType": "address",
+				"name": "renter",
+				"type": "address"
+			}
+		],
+		"name": "autoReturn",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
 	},
 	{
 		"inputs": [
@@ -184,14 +318,33 @@ export const SMART_CONTRACT_ABI =
 				"type": "address"
 			},
 			{
-				"internalType": "uint256",
-				"name": "depositAmountWei",
-				"type": "uint256"
-			},
-			{
 				"internalType": "string",
 				"name": "metadataCid",
 				"type": "string"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "depositPaid",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
 			}
 		],
 		"stateMutability": "view",
@@ -213,6 +366,11 @@ export const SMART_CONTRACT_ABI =
 				"type": "uint256"
 			},
 			{
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			},
+			{
 				"internalType": "bool",
 				"name": "isAvailable",
 				"type": "bool"
@@ -223,14 +381,57 @@ export const SMART_CONTRACT_ABI =
 				"type": "address"
 			},
 			{
-				"internalType": "uint256",
-				"name": "depositAmountWei",
-				"type": "uint256"
-			},
-			{
 				"internalType": "string",
 				"name": "metadataCid",
 				"type": "string"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			}
+		],
+		"name": "getOwnerBooks",
+		"outputs": [
+			{
+				"internalType": "uint256[]",
+				"name": "",
+				"type": "uint256[]"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "id",
+				"type": "uint256"
+			},
+			{
+				"internalType": "address",
+				"name": "renter",
+				"type": "address"
+			}
+		],
+		"name": "getRentalStatus",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "timeRemaining",
+				"type": "uint256"
+			},
+			{
+				"internalType": "bool",
+				"name": "isPenalty",
+				"type": "bool"
 			}
 		],
 		"stateMutability": "view",
@@ -258,6 +459,30 @@ export const SMART_CONTRACT_ABI =
 	{
 		"inputs": [
 			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "intendedDays",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
 				"internalType": "string",
 				"name": "metadataCid",
 				"type": "string"
@@ -265,11 +490,6 @@ export const SMART_CONTRACT_ABI =
 			{
 				"internalType": "uint256",
 				"name": "dailyRentWei",
-				"type": "uint256"
-			},
-			{
-				"internalType": "uint256",
-				"name": "depositWei",
 				"type": "uint256"
 			}
 		],
@@ -299,6 +519,24 @@ export const SMART_CONTRACT_ABI =
 				"type": "uint256"
 			}
 		],
+		"name": "removeBook",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "id",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "rentingDays",
+				"type": "uint256"
+			}
+		],
 		"name": "rentBook",
 		"outputs": [],
 		"stateMutability": "payable",
@@ -323,19 +561,6 @@ export const SMART_CONTRACT_ABI =
 				"internalType": "uint256",
 				"name": "",
 				"type": "uint256"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "rentalStoreOwner",
-		"outputs": [
-			{
-				"internalType": "address",
-				"name": "",
-				"type": "address"
 			}
 		],
 		"stateMutability": "view",

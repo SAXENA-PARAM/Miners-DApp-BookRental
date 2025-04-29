@@ -22,33 +22,76 @@ const pinata = new PinataSDK({
 export default function List() {
   const nav = useNavigate();
 
-  /* wallet / owner state */
+  /* wallet state */
   const [account, setAccount] = useState(null);
-  const [owner, setOwner] = useState(null);
   const [checking, setChecking] = useState(true);
+  const [connectionError, setConnectionError] = useState("");
 
   /* form fields */
   const [title, setTitle] = useState("");
   const [author, setAuthor] = useState("");
   const [rentEth, setRentEth] = useState("");
-  const [depEth, setDepEth] = useState("");
   const [imgFile, setImgFile] = useState(null);
   const [uploadStatus, setUploadStatus] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  /* connect wallet & get store owner ------------------------------ */
+
+  /* connect wallet ------------------------------ */
   useEffect(() => {
-    if (!window.ethereum) return;
-    (async () => {
-      await window.ethereum.request({ method: "eth_requestAccounts" });
-      const w3 = getWeb3();
-      const [a] = await w3.eth.getAccounts();
-      setAccount(a);
-
-      const c = getContract(w3);
-      const own = await c.methods.rentalStoreOwner().call();
-      setOwner(own);
+    if (!window.ethereum) {
+      setConnectionError("Please install MetaMask.");
       setChecking(false);
-    })();
+      return;
+    }
+    
+    const connectWallet = async () => {
+      try {
+        // Request accounts
+        const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
+        
+        if (accounts.length === 0) {
+          setConnectionError("No accounts found. Please unlock MetaMask.");
+          setChecking(false);
+          return;
+        }
+        
+        // Set the account
+        setAccount(accounts[0]);
+        console.log("Connected to account:", accounts[0]);
+        
+        // Connection process complete
+        setChecking(false);
+      } catch (error) {
+        console.error("Wallet connection error:", error);
+        setConnectionError(error.message || "Failed to connect wallet");
+        setChecking(false);
+      }
+    };
+    
+    // Add event listeners for account changes
+    const handleAccountsChanged = (accounts) => {
+      console.log("Accounts changed:", accounts);
+      if (accounts.length === 0) {
+        setAccount(null);
+        setConnectionError("Wallet disconnected");
+      } else {
+        setAccount(accounts[0]);
+        setConnectionError("");
+      }
+    };
+    
+    // Set up listeners
+    window.ethereum.on('accountsChanged', handleAccountsChanged);
+    
+    // Connect wallet
+    connectWallet();
+    
+    // Cleanup
+    return () => {
+      if (window.ethereum.removeListener) {
+        window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
+      }
+    };
   }, []);
 
   /* utils --------------------------------------------------------- */
@@ -122,26 +165,20 @@ const uploadMetadataToPinata = async (metadata) => {
 /* ───────── submit handler ─────────────────────────────────────── */
 const handleSubmit = async (e) => {
   e.preventDefault();
+  if (isSubmitting) return;
+  setIsSubmitting(true);
   try {
     if (!imgFile) return alert("Please select an image file.");
 
-    /* 1. upload image and get raw CID */
     const imageCid = await uploadImageToPinata(imgFile);
-
-    /* 2. build + upload metadata (stores raw imageCid) */
     const metadata = { title, author, imageCid };
     const metadataCid = await uploadMetadataToPinata(metadata);
 
-    /* 3. list book on-chain, sending only the metadata CID */
     const w3 = getWeb3();
-    const c  = getContract(w3);
+    const c = getContract(w3);
 
     await c.methods
-      .listBook(
-        metadataCid,           // raw CID (no ipfs://, no gateway URL)
-        ethToWei(rentEth),
-        ethToWei(depEth)
-      )
+      .listBook(metadataCid, ethToWei(rentEth))
       .send({ from: account });
 
     alert("📚 Book listed successfully!");
@@ -149,19 +186,23 @@ const handleSubmit = async (e) => {
   } catch (err) {
     console.error(err);
     alert(err?.reason || err?.message || "Listing failed.");
+  } finally {
+    setIsSubmitting(false);
   }
 };
 
 
+
   /* UI ------------------------------------------------------------ */
   if (!window.ethereum) return <p>Please install MetaMask.</p>;
-  if (checking) return <p>Connecting wallet…</p>;
-  if (account?.toLowerCase() !== owner?.toLowerCase())
-    return <p>You are not the rental-store owner.</p>;
+  if (checking) return <p>Connecting to wallet...</p>;
+  if (connectionError) return <p>Error: {connectionError}</p>;
+  if (!account) return <p>Please connect your wallet.</p>;
 
   return (
     <div className="list-page">
       <h1 className="page-title">List a New Book</h1>
+      <p className="wallet-info">Connected wallet: {account}</p>
 
       <form className="list-form" onSubmit={handleSubmit}>
         <label>
@@ -195,18 +236,6 @@ const handleSubmit = async (e) => {
         </label>
 
         <label>
-          Deposit&nbsp;(ETH)
-          <input
-            type="number"
-            step="0.0001"
-            min="0"
-            value={depEth}
-            onChange={(e) => setDepEth(e.target.value)}
-            required
-          />
-        </label>
-
-        <label>
           Image&nbsp;File
           <input
             type="file"
@@ -218,9 +247,10 @@ const handleSubmit = async (e) => {
 
         {uploadStatus && <p>{uploadStatus}</p>}
 
-        <button type="submit" className="list-btn" disabled={uploadStatus.includes("Uploading")}>
-          {uploadStatus.includes("Uploading") ? "Uploading..." : "List Book"}
-        </button>
+        <button type="submit" className="list-btn" disabled={isSubmitting}>
+  {isSubmitting ? "Listing…" : "List Book"}
+</button>
+
       </form>
     </div>
   );

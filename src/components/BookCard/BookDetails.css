@@ -1,252 +1,135 @@
-/* BookDetails.module.css  – light mode, consistent design
-   ------------------------------------------------------ */
+/* BookDetails.module.css  – light mode, token-based
+   ------------------------------------------------ */
 
 /* ---------- Design tokens ---------- */
 :root {
-    --clr-bg:          transparent;
-    --clr-card-bg:     #ffffff;
-    --clr-primary:     #5b6aff;
-    --clr-primary-dark:#4b59e0;
-    --clr-text:        #1e1e1e;
-    --clr-text-sub:    #60646c;
-    --clr-badge-bg:    #ff4757;
-    --clr-badge-text:  #ffffff;
-    --radius-lg:       1rem;
-    --radius-sm:       .5rem;
-    --shadow-card:     0 4px 10px rgba(0,0,0,.06);
-    --transition-fast: .15s ease-in-out;
-  }
+  --clr-bg:          transparent;
+  --clr-card-bg:     #ffffff;
+  --clr-primary:     #5b6aff;
+  --clr-primary-dark:#4b59e0;
+  --clr-error:       #ff4757;
+  --clr-text:        #1e1e1e;
+  --clr-text-sub:    #60646c;
+  --radius-lg:       1rem;
+  --radius-md:       .75rem;
+  --radius-sm:       .5rem;
+  --shadow-card:     0 4px 10px rgba(0,0,0,.06);
+  --transition-fast: .15s ease-in-out;
   
-  /* ---------- Page shell ---------- */
-  .details-page {
-    max-width: 700px;
-    margin: 0 auto;
-    padding: 2rem 1.5rem 3.5rem;
-    background: var(--clr-card-bg);
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-card);
-    position: relative;
-    text-align: center;
-  }
-  
-  /* ---------- Back button ---------- */
-  .back {
-    position: absolute;
-    top: 1rem;
-    left: 1rem;
-    background: none;
-    border: none;
-    font-size: 1rem;
-    color: var(--clr-primary);
-    cursor: pointer;
-    padding: 0.25rem 0.5rem;
-  }
-  
-  .back:hover,
-  .back:focus-visible {
-    text-decoration: underline;
-  }
-  
-  /* ---------- Cover image ---------- */
-  .cover-lg {
-    width: 100%;
-    max-width: 240px;
-    height: auto;
-    border-radius: var(--radius-lg);
-    object-fit: cover;
-    margin: 0 auto 1.5rem;
-    box-shadow: var(--shadow-card);
-  }
-  
-  /* ---------- Typography ---------- */
-  h1 {
-    font-size: 1.5rem;
-    margin: 0 0 0.5rem;
-    color: var(--clr-text);
-  }
-  
-  h3 {
-    font-size: 1rem;
-    margin: 0 0 1.25rem;
-    color: var(--clr-text-sub);
-    font-weight: 500;
-  }
-  
-  p {
-    font-size: 0.95rem;
-    margin: 0.4rem 0;
-    color: var(--clr-text);
-  }
-  
-  .rental-metrics {
-    margin: 1rem 0 1.5rem;
-    font-size: 0.875rem;
-    color: var(--clr-text-sub);
-  }
-  
-  /* ---------- Action buttons ---------- */
-  .rent-big,
-  .return-big {
-    display: block;
-    width: 100%;
-    max-width: 260px;
-    margin: 1.25rem auto 0;
-    padding: 0.65rem 0;
-    background: var(--clr-primary);
-    color: #fff;
-    border: none;
-    font-size: 1rem;
-    font-weight: 600;
-    border-radius: var(--radius-sm);
-    cursor: pointer;
-    transition: background var(--transition-fast);
-  }
-  
-  .return-big {
-    background: var(--clr-badge-bg);           /* red for emphasis */
-  }
-  
-  .rent-big:hover,
-  .rent-big:focus-visible,
-  .return-big:hover,
-  .return-big:focus-visible {
-    background: var(--clr-primary-dark);
-  }
-  
-  .unavailable {
-    margin-top: 1.5rem;
-    font-size: 0.95rem;
-    color: var(--clr-text-sub);
-  }
-  
-  /* ---------- Responsive tweaks ---------- */
-  @media (max-width: 480px) {
-    .details-page {
-      padding: 1.5rem 1rem 3rem;
-    }
-    .cover-lg {
-      max-width: 200px;
-    }
-  }
-  
-
-  /* BookDetails.css  – light theme, token-based
-   ------------------------------------------------------- */
+  /* optional spacing scale (used only here) */
+  --space-1: .25rem;
+  --space-2: .5rem;
+  --space-3: 1rem;
+  --space-4: 1.5rem;
+  --space-5: 2rem;
+}
 
 /* ---------- Page shell ---------- */
 .details-page {
-    max-width: 700px;
-    margin: 0 auto;
-    padding: var(--space-4) var(--space-3) calc(var(--space-5) + 16px);
-    background: var(--color-gray-50);
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-md);
-    position: relative;
-    text-align: center;
-  }
-  
-  /* ---------- Back link ---------- */
-  .back {
-    position: absolute;
-    top: var(--space-2);
-    left: var(--space-2);
-    background: none;
-    border: none;
-    color: var(--color-primary);
-    font-size: 1rem;
-    cursor: pointer;
-  }
-  
-  .back:hover,
-  .back:focus-visible {
-    text-decoration: underline;
-  }
-  
-  /* ---------- Cover image ---------- */
-  .cover-lg {
-    width: 100%;
-    max-width: 240px;
-    height: auto;
-    border-radius: var(--radius-md);
-    object-fit: cover;
-    margin: 0 auto var(--space-3);
-    box-shadow: var(--shadow-sm);
-  }
-  
-  /* ---------- Typography ---------- */
-  h1 {
-    font-size: 1.5rem;
-    margin-bottom: var(--space-1);
-    color: var(--color-gray-900);
-  }
-  
-  h3 {
-    font-size: 1rem;
-    font-weight: 500;
-    color: var(--color-gray-600);
-    margin-bottom: var(--space-3);
-  }
-  
-  p {
-    font-size: 0.95rem;
-    color: var(--color-gray-800);
-    margin: var(--space-1) 0;
-  }
-  
-  .rental-metrics {
-    font-size: 0.85rem;
-    color: var(--color-gray-600);
-    margin: var(--space-2) 0 var(--space-3);
-  }
-  
-  /* ---------- Action buttons ---------- */
-  .rent-big,
-  .return-big {
-    display: block;
-    width: 100%;
-    max-width: 260px;
-    margin: var(--space-3) auto 0;
-    padding: 0.65rem 0;
-    font-size: 1rem;
-    font-weight: 600;
-    color: #fff;
-    border: none;
-    border-radius: var(--radius-sm);
-    transition: background var(--transition-fast);
-  }
-  
-  /* primary (rent) */
-  .rent-big {
-    background: var(--color-primary);
-  }
-  .rent-big:hover,
-  .rent-big:focus-visible {
-    background: var(--color-primary-dark);
-  }
-  
-  /* danger (return) */
-  .return-big {
-    background: var(--color-error);
-  }
-  .return-big:hover,
-  .return-big:focus-visible {
-    background: var(--color-error);
-    filter: brightness(0.9);
-  }
-  
-  .unavailable {
-    margin-top: var(--space-3);
-    font-size: 0.95rem;
-    color: var(--color-gray-600);
-  }
-  
-  /* ---------- Responsive tweaks ---------- */
-  @media (max-width: 480px) {
-    .details-page {
-      padding: var(--space-3) var(--space-2) var(--space-4);
-    }
-    .cover-lg {
-      max-width: 200px;
-    }
-  }
-  
+  max-width: 700px;
+  margin: 0 auto;
+  padding: var(--space-4) var(--space-3) calc(var(--space-5) + 16px);
+  background: var(--clr-card-bg);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  position: relative;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* ---------- Back button ---------- */
+.back {
+  position: absolute;
+  top: var(--space-2);
+  left: var(--space-2);
+  background: none;
+  border: none;
+  color: var(--clr-primary);
+  font-size: 1rem;
+  cursor: pointer;
+  padding: var(--space-1) var(--space-2);
+}
+.back:hover,
+.back:focus-visible { text-decoration: underline; }
+
+/* ---------- Cover image ---------- */
+.cover-lg {
+  width: 100%;
+  max-width: 240px;
+  border-radius: var(--radius-lg);
+  object-fit: cover;
+  margin: 0 auto var(--space-3);
+  box-shadow: var(--shadow-card);
+}
+
+/* ---------- Typography ---------- */
+h1 {
+  font-size: 1.5rem;
+  margin-bottom: var(--space-1);
+  color: var(--clr-text);
+}
+h3 {
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--clr-text-sub);
+  margin-bottom: var(--space-3);
+}
+p {
+  font-size: .95rem;
+  color: var(--clr-text);
+  margin: var(--space-1) 0;
+}
+.rental-metrics {
+  font-size: .85rem;
+  color: var(--clr-text-sub);
+  margin: var(--space-2) 0 var(--space-3);
+}
+
+/* ---------- Action buttons ---------- */
+.rent-big,
+.return-big {
+  display: block;
+  width: 100%;
+  max-width: 260px;
+  margin: var(--space-3) auto 0;
+  padding: .65rem 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-sm);
+  transition: background var(--transition-fast);
+}
+
+/* primary (rent) states */
+.rent-big.active  { background: var(--clr-primary); }
+.rent-big.active:hover,
+.rent-big.active:focus-visible { background: var(--clr-primary-dark); }
+
+.rent-big.disabled {
+  background: #b0b0b0;
+  cursor: not-allowed;
+  opacity: .6;
+}
+
+/* danger (return) */
+.return-big        { background: var(--clr-error); }
+.return-big:hover,
+.return-big:focus-visible {
+  background: var(--clr-error);
+  filter: brightness(.9);
+}
+
+.unavailable {
+  margin-top: var(--space-3);
+  font-size: .95rem;
+  color: var(--clr-text-sub);
+}
+
+/* ---------- Responsive tweaks ---------- */
+@media (max-width: 480px) {
+  .details-page { padding: var(--space-3) var(--space-2) var(--space-4); }
+  .cover-lg     { max-width: 200px; }
+}

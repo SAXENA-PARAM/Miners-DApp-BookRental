@@ -2,61 +2,89 @@
 import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import Web3 from "web3";
-import { SMART_CONTRACT_ABI, SMART_CONTRACT_ADDRESS } from "../../constants.js";
+import {
+  SMART_CONTRACT_ABI,
+  SMART_CONTRACT_ADDRESS,
+} from "../../constants.js";
 import "./Explore.css";
 
-/* helpers */
-const getWeb3     = () => new Web3(window.ethereum);
+/* ─── helpers ─────────────────────────────────────────────── */
+const getWeb3 = () => new Web3(window.ethereum);
 const getContract = (w3) =>
   new w3.eth.Contract(SMART_CONTRACT_ABI, SMART_CONTRACT_ADDRESS);
-const weiToEth    = (w) => Number(w) / 1e18;
-const ipfsGateway = "https://silver-total-swallow-275.mypinata.cloud/ipfs/";  // Pinata gateway URL
+const weiToEth = (w) => Number(w) / 1e18;
+const ipfsGateway =
+  "https://silver-total-swallow-275.mypinata.cloud/ipfs/";
 
-/* component */
+// constants that mirror the solidity contract
+const MAX_PENALTY_DAYS = 5n;
+const PENALTY_PER_DAY_WEI = 100000000000000n; // 1e14
+
+/* ─── component ───────────────────────────────────────────── */
 const Explore = () => {
   const [account, setAccount] = useState(null);
   const [books, setBooks] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  /* load catalogue */
-  const loadBooks = useCallback(async () => {
-    setLoading(true);
-    try {
-      const c = getContract(getWeb3());
-      const nextId = await c.methods.nextBookId().call();
-      const maxId = Number(nextId) - 1;
-      const list = [];
+  /* load the whole catalogue + per-book status for current user */
+  const loadBooks = useCallback(
+    async (userAddress) => {
+      setLoading(true);
+      try {
+        const c = getContract(getWeb3());
+        const nextId = await c.methods.nextBookId().call();
+        const maxId = Number(nextId) - 1;
+        const list = [];
 
-      for (let id = 1; id <= maxId; id++) {
-        const b = await c.methods.getBookDetails(id).call();
-        
-        // Fetch metadata from IPFS using metadataCid
-        const metadataUrl = `${ipfsGateway}${b.metadataCid}`;
-        const metadataRes = await fetch(metadataUrl);
-        const metadata = await metadataRes.json();
+        for (let id = 1; id <= maxId; id++) {
+          const b = await c.methods.getBookDetails(id).call();
 
-        // Extract imageCid from metadata and construct the image URL
-        let imageUrl = "/default-image.jpg"; // Fallback image if not available
-        if (metadata.imageCid) {
-          imageUrl = `${ipfsGateway}${metadata.imageCid}`;  // Construct image URL using Pinata's IPFS gateway
+          // fetch off-chain metadata
+          const metadataUrl = `${ipfsGateway}${b.metadataCid}`;
+          const metadata = await (await fetch(metadataUrl)).json();
+
+          /* default status */
+          let timeRemaining = 0;
+          let isPenalty = false;
+          let isRentedByMe=false;
+
+          /* only ask the contract if *this* user is the active renter */
+          if (
+            userAddress &&
+            b.currentRenter &&
+            b.currentRenter.toLowerCase() === userAddress.toLowerCase()
+          ) {
+            isRentedByMe = true;
+            const status = await c.methods
+              .getRentalStatus(id, userAddress)
+              .call();
+              console.log(status);
+            timeRemaining = Number(status.timeRemaining);
+            isPenalty     = status.isPenalty;
+          }
+          list.push({
+            id,
+            owner: b.owner,
+            currentRenter: b.currentRenter,
+            title: metadata.title ?? "Untitled",
+            author: metadata.author ?? "Unknown",
+            dailyRentWei: b.dailyRentWei,
+            isAvailable: b.isAvailable,
+            imageUri: metadata.imageCid
+              ? `${ipfsGateway}${metadata.imageCid}`
+              : "/default-image.jpg",
+            timeRemaining,
+            isPenalty,
+            isRentedByMe
+          });
         }
-
-        // Construct the book details
-        list.push({
-          id,
-          title: metadata.title ?? b.title,
-          author: metadata.author ?? b.author,
-          dailyRentWei: b.dailyRentWei ?? b.dailyRentWei,
-          isAvailable: b.isAvailable ?? b.isAvailable,
-          depositWei: b.depositAmountWei ?? b.depositAmountWei,
-          imageUri: imageUrl,  // Use constructed image URL
-        });
+        setBooks(list);
+      } finally {
+        setLoading(false);
       }
-      setBooks(list);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+    },
+    []
+  );
 
   /* connect wallet once */
   useEffect(() => {
@@ -65,30 +93,40 @@ const Explore = () => {
       await window.ethereum.request({ method: "eth_requestAccounts" });
       const [addr] = await getWeb3().eth.getAccounts();
       setAccount(addr);
-      loadBooks();
+      loadBooks(addr);
     })();
   }, [loadBooks]);
 
-  /* rent handler (BigInt math) */
+  /* rent handler (prompts for days first) */
   const handleRent = async (book) => {
+    const daysStr = prompt(
+      `For how many days do you want to rent “${book.title}”?`,
+      "1"
+    );
+    const days = Number(daysStr);
+    if (!days || days < 1) return; // cancelled / invalid
+
     try {
       const w3 = getWeb3();
-      const c  = getContract(w3);
+      const c = getContract(w3);
 
-      const totalWei = (
-        BigInt(book.dailyRentWei.toString()) +
-        BigInt(book.depositWei.toString())
-      ).toString();
+      // deposit = days * dailyRent + MAX_PENALTY_DAYS * PENALTY_PER_DAY
+      const deposit =
+        BigInt(days) * BigInt(book.dailyRentWei) +
+        MAX_PENALTY_DAYS * PENALTY_PER_DAY_WEI;
 
-      await c.methods.rentBook(book.id).send({ from: account, value: totalWei });
-      alert("Rented!");
-      loadBooks();
+      await c.methods
+        .rentBook(book.id, days)
+        .send({ from: account, value: deposit.toString() });
+
+      alert("Rented successfully!");
+      loadBooks(account); // refresh UI
     } catch (err) {
       alert(err?.reason || err?.message || "Rent failed.");
     }
   };
 
-  /* UI */
+  /* ─── UI ─────────────────────────────────────────────────── */
   if (!window.ethereum) return <p>Please install MetaMask.</p>;
 
   return (
@@ -101,32 +139,71 @@ const Explore = () => {
         <p className="explore-msg">No books listed yet.</p>
       ) : (
         <div className="books-list">
-          {books.map((b) => (
-            <Link
-              to={`/book/${b.id}`}
-              key={b.id}
-              className="book-card link-wrapper"
-            >
-              {b.imageUri && <img src={b.imageUri} alt={b.title} className="cover" />}
-              <h2>{b.title}</h2>
-              <p className="author">by {b.author}</p>
-              <p>Daily&nbsp;{weiToEth(b.dailyRentWei)} ETH</p>
+          {books.map((b) => {
+            const isOwner =
+              account &&
+              account.toLowerCase() === b.owner.toLowerCase();
 
-              {!b.isAvailable && <span className="badge">Rented</span>}
+            return (
+              <Link
+                to={`/book/${b.id}`}
+                key={b.id}
+                className="book-card link-wrapper"
+              >
+                {b.imageUri && (
+                  <img
+                    src={b.imageUri}
+                    alt={b.title}
+                    className="cover"
+                    loading="lazy"
+                  />
+                )}
 
-              {b.isAvailable && (
-                <button
-                  className="rent-button"
-                  onClick={(e) => {
-                    e.preventDefault(); // keep card clickable
-                    handleRent(b);
-                  }}
-                >
-                  Rent
-                </button>
-              )}
-            </Link>
-          ))}
+                <h2>{b.title}</h2>
+                <p className="author">by {b.author}</p>
+                <p>Daily&nbsp;{weiToEth(b.dailyRentWei)} ETH</p>
+
+                
+
+                {!b.isAvailable && (
+                  b.isRentedByMe ? (
+                    <p
+                      className="time"
+                      style={{
+                        background: b.isPenalty
+                          ? "rgba(186, 9, 20, 0.93)"
+                          : "rgba(9, 96, 186, 0.8)",
+                      }}
+                    >
+                      {b.timeRemaining} day{b.timeRemaining === 1 ? "" : "s"}
+                    </p>
+                  ) : (
+                    <p className="unavailable">Currently rented out</p>
+                  )
+                )}
+
+                {!b.isAvailable && (
+                  <span className="badge rented-badge">Rented</span>
+                )}
+
+                {/* Rent button states */}
+                {b.isAvailable && (
+                  <button
+                    className={`rent-button ${
+                      isOwner ? "disabled" : "active"
+                    }`}
+                    disabled={isOwner}
+                    onClick={(e) => {
+                      e.preventDefault(); // keep card clickable
+                      if (!isOwner) handleRent(b);
+                    }}
+                  >
+                    {isOwner ? "Your book" : "Rent"}
+                  </button>
+                )}
+              </Link>
+            );
+          })}
         </div>
       )}
     </div>
