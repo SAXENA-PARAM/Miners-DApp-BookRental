@@ -181,7 +181,7 @@ export default function BookDetails() {
         >
           {status.timeRemaining} day
           {status.timeRemaining === 1 ? "" : "s"}{" "}
-          {status.isPenalty ? "in penalty" : "remaining"}
+          {status.isPenalty ? "left in AutoReturn" : "remaining"}
         </p>
       )}
 

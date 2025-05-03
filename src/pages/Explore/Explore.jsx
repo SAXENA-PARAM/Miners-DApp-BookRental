@@ -27,64 +27,74 @@ const Explore = () => {
   const [loading, setLoading] = useState(true);
 
   /* load the whole catalogue + per-book status for current user */
-  const loadBooks = useCallback(
-    async (userAddress) => {
-      setLoading(true);
-      try {
-        const c = getContract(getWeb3());
-        const nextId = await c.methods.nextBookId().call();
-        const maxId = Number(nextId) - 1;
-        const list = [];
-
-        for (let id = 1; id <= maxId; id++) {
-          const b = await c.methods.getBookDetails(id).call();
-
-          // fetch off-chain metadata
-          const metadataUrl = `${ipfsGateway}${b.metadataCid}`;
-          const metadata = await (await fetch(metadataUrl)).json();
-
-          /* default status */
-          let timeRemaining = 0;
-          let isPenalty = false;
-          let isRentedByMe=false;
-
-          /* only ask the contract if *this* user is the active renter */
-          if (
-            userAddress &&
-            b.currentRenter &&
-            b.currentRenter.toLowerCase() === userAddress.toLowerCase()
-          ) {
-            isRentedByMe = true;
-            const status = await c.methods
-              .getRentalStatus(id, userAddress)
-              .call();
-              console.log(status);
-            timeRemaining = Number(status.timeRemaining);
-            isPenalty     = status.isPenalty;
-          }
-          list.push({
-            id,
-            owner: b.owner,
-            currentRenter: b.currentRenter,
-            title: metadata.title ?? "Untitled",
-            author: metadata.author ?? "Unknown",
-            dailyRentWei: b.dailyRentWei,
-            isAvailable: b.isAvailable,
-            imageUri: metadata.imageCid
-              ? `${ipfsGateway}${metadata.imageCid}`
-              : "/default-image.jpg",
-            timeRemaining,
-            isPenalty,
-            isRentedByMe
-          });
+  const loadBooks = useCallback(async (userAddress) => {
+    setLoading(true);
+    try {
+      const c = getContract(getWeb3());
+      const nextId = await c.methods.nextBookId().call();
+      const maxId = Number(nextId) - 1;
+      const bookIds = Array.from({ length: maxId }, (_, i) => i + 1);
+  
+      // 1. Fetch all book details in parallel
+      const bookDetails = await Promise.all(
+        bookIds.map((id) => c.methods.getBookDetails(id).call())
+      );
+  
+      // 2. Fetch all metadata in parallel
+      const metadataResponses = await Promise.all(
+        bookDetails.map((b) =>
+          fetch(`${ipfsGateway}${b.metadataCid}`)
+            .then((res) => res.json())
+            .catch(() => ({})) // handle bad or missing JSON gracefully
+        )
+      );
+  
+      // 3. Conditionally fetch rental statuses (only for user-rented books)
+      const statusPromises = bookDetails.map((b, i) => {
+        if (
+          userAddress &&
+          b.currentRenter &&
+          b.currentRenter.toLowerCase() === userAddress.toLowerCase()
+        ) {
+          return c.methods.getRentalStatus(bookIds[i], userAddress).call();
+        } else {
+          return null;
         }
-        setBooks(list);
-      } finally {
-        setLoading(false);
-      }
-    },
-    []
-  );
+      });
+  
+      const statuses = await Promise.all(statusPromises);
+  
+      const list = bookDetails.map((b, i) => {
+        const metadata = metadataResponses[i];
+        const status = statuses[i];
+        const isRentedByMe =
+          status != null && b.currentRenter.toLowerCase() === userAddress.toLowerCase();
+  
+        return {
+          id: bookIds[i],
+          owner: b.owner,
+          currentRenter: b.currentRenter,
+          title: metadata.title ?? "Untitled",
+          author: metadata.author ?? "Unknown",
+          dailyRentWei: b.dailyRentWei,
+          isAvailable: b.isAvailable,
+          imageUri: metadata.imageCid
+            ? `${ipfsGateway}${metadata.imageCid}`
+            : "/default-image.jpg",
+          timeRemaining: status ? Number(status.timeRemaining) : 0,
+          isPenalty: status ? status.isPenalty : false,
+          isRentedByMe,
+        };
+      });
+  
+      setBooks(list);
+    } catch (err) {
+      console.error("Failed to load books:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+  
 
   /* connect wallet once */
   useEffect(() => {
@@ -170,12 +180,12 @@ const Explore = () => {
                     <p
                       className="time"
                       style={{
-                        background: b.isPenalty
+                        background: b.isPenalty 
                           ? "rgba(186, 9, 20, 0.93)"
                           : "rgba(9, 96, 186, 0.8)",
                       }}
                     >
-                      {b.timeRemaining} day{b.timeRemaining === 1 ? "" : "s"}
+                      {b.timeRemaining} day{b.timeRemaining === 1 ? " left" : "s left"}
                     </p>
                   ) : (
                     <p className="unavailable">Currently rented out</p>
