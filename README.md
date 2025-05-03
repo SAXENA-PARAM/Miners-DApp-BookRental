@@ -380,6 +380,6 @@ Following result window was obtained on testing the system of Foundry:
 <br>
 ![image](pictures/test.jpg)
 
-You can visit this: [Foundry Documentation](https://book.getfoundry.sh/) to install the testing system.
+You can visit this: [This Repository](https://github.com/SAXENA-PARAM/BookChain-Testing) to clone and test the testing system.
 ---
 Note: Image Examples were taken from different user accounts, that's why there can be a contradiction in the images of different functions about some item, but in their own topic they are putted, keeping each significant to thier topic/feature.
